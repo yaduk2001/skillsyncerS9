@@ -1,0 +1,802 @@
+const express = require('express');
+const router = express.Router();
+const User = require('../models/User');
+const EmployeeRequest = require('../models/EmployeeRequest');
+const { protect } = require('../middleware/auth');
+const {
+  sendMentorCredentials,
+  sendNotificationEmail,
+  sendWelcomeEmail,
+  sendShortlistEmail,
+  sendRejectionEmail,
+  sendEmployeeCredentials,
+  sendRequestRejectionEmail
+} = require('../utils/emailService');
+
+// Middleware to check if user is admin
+const adminAuth = async (req, res, next) => {
+  try {
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied. Admin privileges required.'
+      });
+    }
+    next();
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+      error: error.message
+    });
+  }
+};
+
+// Get all users (for admin dashboard)
+router.get('/users', [protect, adminAuth], async (req, res) => {
+  try {
+    const { role, status, page = 1, limit = 10 } = req.query;
+
+    // Build filter object
+    const filter = {};
+    if (role) filter.role = role;
+    if (status) filter.isActive = status === 'active';
+
+    // Calculate pagination
+    const skip = (page - 1) * limit;
+
+    // Fetch users with pagination and populate company info for employees
+    const users = await User.find(filter)
+      .select('-password')
+      .populate('employeeProfile.companyId', 'name company.name')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(parseInt(limit));
+
+    // Get total count for pagination
+    const totalUsers = await User.countDocuments(filter);
+
+    res.json({
+      success: true,
+      data: {
+        users,
+        pagination: {
+          currentPage: parseInt(page),
+          totalPages: Math.ceil(totalUsers / limit),
+          totalUsers,
+          hasNext: page * limit < totalUsers,
+          hasPrev: page > 1
+        }
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching users:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching users',
+      error: error.message
+    });
+  }
+});
+
+// Get all mentors (new endpoint)
+router.get('/mentors', [protect, adminAuth], async (req, res) => {
+  try {
+    const { status, page = 1, limit = 10 } = req.query;
+
+    const filter = { role: 'mentor' };
+    if (status) filter.isActive = status === 'active';
+
+    const skip = (page - 1) * limit;
+
+    const mentors = await User.find(filter)
+      .select('-password')
+      .populate('employeeProfile.companyId', 'name company.name')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(parseInt(limit));
+
+    const totalMentors = await User.countDocuments(filter);
+
+    res.json({
+      success: true,
+      data: {
+        mentors,
+        pagination: {
+          currentPage: parseInt(page),
+          totalPages: Math.ceil(totalMentors / limit),
+          totalMentors,
+          hasNext: page * limit < totalMentors,
+          hasPrev: page > 1
+        }
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching mentors:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching mentors',
+      error: error.message
+    });
+  }
+});
+
+// Add a new mentor (new endpoint)
+router.post('/mentors', [protect, adminAuth], async (req, res) => {
+  try {
+    const { name, email, mentorProfile, companyId } = req.body;
+
+    if (!name || !email) {
+      return res.status(400).json({
+        success: false,
+        message: 'Name and email are required'
+      });
+    }
+
+    // Validate phone number exists in mentorProfile
+    if (!mentorProfile || !mentorProfile.phone) {
+      return res.status(400).json({
+        success: false,
+        message: 'Phone number is required'
+      });
+    }
+
+    // Check if mentor already exists
+    const existingMentor = await User.findOne({ email });
+    if (existingMentor) {
+      return res.status(400).json({
+        success: false,
+        message: 'Mentor already exists with this email'
+      });
+    }
+
+    // If companyId is provided, verify it exists
+    let employeeProfile = undefined;
+    if (companyId) {
+      const company = await User.findById(companyId);
+      if (!company || (company.role !== 'company' && company.role !== 'employer')) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid company ID selected'
+        });
+      }
+      employeeProfile = {
+        companyId: companyId,
+        joinDate: new Date()
+      };
+    }
+
+    // Auto-generate password: first 4 letters of name + last 2 digits of phone
+    const generatePassword = (name, phone) => {
+      const namePrefix = name.replace(/\s+/g, '').substring(0, 4).toLowerCase();
+      const phoneDigits = phone.replace(/\D/g, ''); // Remove non-digits
+      const phoneSuffix = phoneDigits.slice(-2);
+      return namePrefix + phoneSuffix;
+    };
+
+    const autoGeneratedPassword = generatePassword(name, mentorProfile.phone);
+    const plainPassword = autoGeneratedPassword;
+
+    // Create mentor user
+    const mentor = await User.create({
+      name,
+      email,
+      password: autoGeneratedPassword,
+      role: 'mentor',
+      mentorProfile,
+      ...(employeeProfile && { employeeProfile })
+    });
+
+    mentor.calculateProfileCompletion();
+    await mentor.save();
+
+    const mentorResponse = await User.findById(mentor._id).select('-password');
+
+    // Send credentials email to mentor
+    try {
+      const emailResult = await sendMentorCredentials(email, name, plainPassword);
+
+      if (emailResult && emailResult.success) {
+        console.log('✅ Mentor credentials email sent successfully');
+        console.log('📧 Message ID:', emailResult.messageId);
+      } else {
+        console.error('Failed to send mentor credentials email');
+      }
+    } catch (emailError) {
+      console.error('Error sending mentor credentials email:', emailError);
+      // Don't fail the mentor creation if email fails
+    }
+
+    res.status(201).json({
+      success: true,
+      message: 'Mentor added successfully',
+      data: mentorResponse
+    });
+  } catch (error) {
+    console.error('Error adding mentor:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error adding mentor',
+      error: error.message
+    });
+  }
+});
+
+// Endpoint removed: set-grades (Legacy Mentor A/B logic invalidated)
+router.post('/mentors/set-grades', [protect, adminAuth], async (req, res) => {
+  return res.status(410).json({
+    success: false,
+    message: 'This function is deprecated. Please assign grades to real employees/mentors via their profile.'
+  });
+});
+
+// Delete mentor by id (also unassigns mentees)
+router.delete('/mentors/:mentorId', [protect, adminAuth], async (req, res) => {
+  try {
+    const { mentorId } = req.params;
+    const mentor = await User.findById(mentorId);
+    if (!mentor) {
+      return res.status(404).json({ success: false, message: 'Mentor not found' });
+    }
+    if (!(mentor.role === 'mentor' || (mentor.secondaryRoles || []).includes('mentor'))) {
+      return res.status(400).json({ success: false, message: 'User is not a mentor' });
+    }
+
+    // Unassign mentees
+    await User.updateMany(
+      { 'profile.assignedMentor': mentorId },
+      { $set: { 'profile.assignedMentor': null, 'profile.mentorAssignmentDate': null } }
+    );
+
+    // Delete user
+    await User.findByIdAndDelete(mentorId);
+    res.json({ success: true, message: 'Mentor deleted and mentees unassigned' });
+  } catch (error) {
+    console.error('Error deleting mentor:', error);
+    res.status(500).json({ success: false, message: 'Error deleting mentor', error: error.message });
+  }
+});
+
+// Get all employers/companies
+router.get('/companies', [protect, adminAuth], async (req, res) => {
+  try {
+    const { status, industry, page = 1, limit = 10 } = req.query;
+
+    // Build filter object for employers and companies
+    const filter = { role: { $in: ['employer', 'company'] } };
+    if (status) filter.isActive = status === 'active';
+    if (industry) filter['company.industry'] = industry;
+
+    // Calculate pagination
+    const skip = (page - 1) * limit;
+
+    // Fetch employers with company data
+    const companies = await User.find(filter)
+      .select('-password')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(parseInt(limit));
+
+    // Get total count for pagination
+    const totalCompanies = await User.countDocuments(filter);
+
+    // Transform data to include company information
+    const transformedCompanies = companies.map(user => ({
+      id: user._id,
+      name: user.company?.name || user.name,
+      email: user.email,
+      industry: user.company?.industry || 'Not specified',
+      location: user.company?.location || 'Not specified',
+      phone: user.company?.phone || 'Not provided',
+      website: user.company?.website || 'Not provided',
+      size: user.company?.size || 'Not specified',
+      description: user.company?.description || 'No description',
+      status: user.isActive ? 'active' : 'inactive',
+      verified: user.isEmailVerified,
+      joinDate: user.createdAt,
+      lastLogin: user.lastLogin,
+      profileCompletion: user.profileCompletion
+    }));
+
+    res.json({
+      success: true,
+      data: {
+        companies: transformedCompanies,
+        pagination: {
+          currentPage: parseInt(page),
+          totalPages: Math.ceil(totalCompanies / limit),
+          totalCompanies,
+          hasNext: page * limit < totalCompanies,
+          hasPrev: page > 1
+        }
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching companies:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching companies',
+      error: error.message
+    });
+  }
+});
+
+// Get dashboard statistics
+router.get('/stats', [protect, adminAuth], async (req, res) => {
+  try {
+    // Get user counts by role
+    const totalUsers = await User.countDocuments();
+    const jobseekers = await User.countDocuments({ role: 'jobseeker' });
+    const employers = await User.countDocuments({ role: { $in: ['employer', 'company'] } });
+    const mentors = await User.countDocuments({ role: 'mentor' });
+    const employees = await User.countDocuments({ role: 'employee' });
+    const activeUsers = await User.countDocuments({ isActive: true });
+    const verifiedUsers = await User.countDocuments({ isEmailVerified: true });
+
+    // Get recent registrations (last 30 days)
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const recentRegistrations = await User.countDocuments({
+      createdAt: { $gte: thirtyDaysAgo }
+    });
+
+    // Get industry distribution for companies
+    const industryStats = await User.aggregate([
+      { $match: { role: { $in: ['employer', 'company'] } } },
+      { $group: { _id: '$company.industry', count: { $sum: 1 } } },
+      { $sort: { count: -1 } }
+    ]);
+
+    res.json({
+      success: true,
+      data: {
+        overview: {
+          totalUsers,
+          jobseekers,
+          employers,
+          mentors,
+          employees,
+          activeUsers,
+          verifiedUsers,
+          recentRegistrations
+        },
+        industryDistribution: industryStats
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching stats:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching statistics',
+      error: error.message
+    });
+  }
+});
+
+// Update user status (activate/deactivate)
+router.patch('/users/:userId/status', [protect, adminAuth], async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { isActive } = req.body;
+
+    const user = await User.findByIdAndUpdate(
+      userId,
+      { isActive },
+      { new: true }
+    ).select('-password');
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      message: `User ${isActive ? 'activated' : 'deactivated'} successfully`,
+      data: user
+    });
+  } catch (error) {
+    console.error('Error updating user status:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error updating user status',
+      error: error.message
+    });
+  }
+});
+
+// Delete user
+router.delete('/users/:userId', [protect, adminAuth], async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    const user = await User.findById(userId).select('role');
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    if (user.role === 'admin') {
+      return res.status(400).json({
+        success: false,
+        message: 'Deletion blocked: cannot delete admin users'
+      });
+    }
+
+    await User.findByIdAndDelete(userId);
+
+    res.json({
+      success: true,
+      message: 'User deleted successfully'
+    });
+  } catch (error) {
+    console.error('Error deleting user:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error deleting user',
+      error: error.message
+    });
+  }
+});
+
+// Test email endpoint (for development only)
+router.post('/test-email', [protect, adminAuth], async (req, res) => {
+  try {
+    const { email, emailType = 'notification' } = req.body;
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email is required'
+      });
+    }
+
+    let testResult;
+    let emailName;
+
+    switch (emailType) {
+      case 'welcome':
+        emailName = 'Welcome Email';
+        testResult = await sendWelcomeEmail(email, 'Test User', 'jobseeker');
+        break;
+      case 'shortlist':
+        emailName = 'Shortlist Email';
+        testResult = await sendShortlistEmail(email, 'Test User', 'Test Company', 'Test Internship');
+        break;
+      case 'rejection':
+        emailName = 'Rejection Email';
+        testResult = await sendRejectionEmail(email, 'Test User', 'Test Company', 'Test Internship');
+        break;
+      case 'mentor':
+        emailName = 'Mentor Credentials Email';
+        testResult = await sendMentorCredentials(email, 'Test Mentor', 'testpass123', 'Test Company');
+        break;
+      case 'notification':
+      default:
+        emailName = 'Notification Email';
+        testResult = await sendNotificationEmail(
+          email,
+          'SkillSyncer Email Test',
+          `
+            <h2>Email Configuration Test</h2>
+            <p>If you receive this email, your email configuration is working correctly!</p>
+            <p>Sent at: ${new Date().toISOString()}</p>
+            <p>Email Type: ${emailName}</p>
+          `
+        );
+        break;
+    }
+
+    res.json({
+      success: testResult.success,
+      message: testResult.success
+        ? `${emailName} sent successfully. Check ${email} inbox (and spam folder).`
+        : `Failed to send ${emailName}`,
+      emailType: emailName,
+      messageId: testResult.messageId || null,
+      error: testResult.error || null,
+      code: testResult.code || null
+    });
+  } catch (error) {
+    console.error('Error sending test email:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error sending test email',
+      error: error.message
+    });
+  }
+});
+
+// Test all email types endpoint
+router.post('/test-all-emails', [protect, adminAuth], async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email is required'
+      });
+    }
+
+    const results = {
+      email,
+      tests: [],
+      summary: {
+        total: 0,
+        passed: 0,
+        failed: 0
+      }
+    };
+
+    // Test 1: Notification Email
+    results.summary.total++;
+    let result = await sendNotificationEmail(
+      email,
+      'Test: Notification Email',
+      '<p>This is a test notification email.</p>'
+    );
+    results.tests.push({
+      type: 'Notification Email',
+      success: result.success,
+      messageId: result.messageId,
+      error: result.error
+    });
+    if (result.success) results.summary.passed++;
+    else results.summary.failed++;
+
+    // Test 2: Welcome Email
+    results.summary.total++;
+    result = await sendWelcomeEmail(email, 'Test User', 'jobseeker');
+    results.tests.push({
+      type: 'Welcome Email (Jobseeker)',
+      success: result.success,
+      messageId: result.messageId,
+      error: result.error
+    });
+    if (result.success) results.summary.passed++;
+    else results.summary.failed++;
+
+    // Test 3: Shortlist Email
+    results.summary.total++;
+    result = await sendShortlistEmail(email, 'Test User', 'Test Company', 'Test Internship');
+    results.tests.push({
+      type: 'Shortlist Email',
+      success: result.success,
+      messageId: result.messageId,
+      error: result.error
+    });
+    if (result.success) results.summary.passed++;
+    else results.summary.failed++;
+
+    // Test 4: Rejection Email
+    results.summary.total++;
+    result = await sendRejectionEmail(email, 'Test User', 'Test Company', 'Test Internship');
+    results.tests.push({
+      type: 'Rejection Email',
+      success: result.success,
+      messageId: result.messageId,
+      error: result.error
+    });
+    if (result.success) results.summary.passed++;
+    else results.summary.failed++;
+
+    // Test 5: Mentor Credentials Email
+    results.summary.total++;
+    result = await sendMentorCredentials(email, 'Test Mentor', 'testpass123', 'Test Company');
+    results.tests.push({
+      type: 'Mentor Credentials Email',
+      success: result.success,
+      messageId: result.messageId,
+      error: result.error
+    });
+    if (result.success) results.summary.passed++;
+    else results.summary.failed++;
+
+    res.json({
+      success: results.summary.failed === 0,
+      message: `Email tests completed. ${results.summary.passed}/${results.summary.total} passed.`,
+      data: results
+    });
+  } catch (error) {
+    console.error('Error testing all emails:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error testing emails',
+      error: error.message
+    });
+  }
+});
+
+// Get all employee requests
+router.get('/employee-requests', [protect, adminAuth], async (req, res) => {
+  try {
+    const { status, isInternalService, page = 1, limit = 10 } = req.query;
+
+    // Build filter object
+    const filter = {};
+    if (status) filter.status = status;
+    if (isInternalService) filter.isInternalService = isInternalService === 'true';
+
+    // Calculate pagination
+    const skip = (page - 1) * limit;
+
+    // Fetch employee requests with pagination
+    const requests = await EmployeeRequest.find(filter)
+      .populate('companyId', 'name email')
+      .populate('reviewedBy', 'name email')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(parseInt(limit));
+
+    // Get total count for pagination
+    const totalRequests = await EmployeeRequest.countDocuments(filter);
+
+    res.json({
+      success: true,
+      data: {
+        requests,
+        pagination: {
+          currentPage: parseInt(page),
+          totalPages: Math.ceil(totalRequests / limit),
+          totalRequests,
+          hasNext: page * limit < totalRequests,
+          hasPrev: page > 1
+        }
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching employee requests:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching employee requests',
+      error: error.message
+    });
+  }
+});
+
+// Update employee request status (approve/reject)
+router.patch('/employee-requests/:requestId/status', [protect, adminAuth], async (req, res) => {
+  try {
+    const { requestId } = req.params;
+    const { status, adminNotes } = req.body;
+
+    if (!['approved', 'rejected'].includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Status must be either approved or rejected'
+      });
+    }
+
+    const request = await EmployeeRequest.findById(requestId);
+
+    if (!request) {
+      return res.status(404).json({
+        success: false,
+        message: 'Employee request not found'
+      });
+    }
+
+    request.status = status;
+    request.adminNotes = adminNotes || '';
+    request.reviewedBy = req.user._id;
+    request.reviewedAt = new Date();
+    await request.save();
+
+    const populatedRequest = await EmployeeRequest.findById(requestId)
+      .populate('companyId', 'name email');
+
+    // If approved, create employee user account
+    if (status === 'approved') {
+      try {
+        // Check if user already exists
+        const existingUser = await User.findOne({ email: request.email });
+
+        if (!existingUser) {
+          // Generate password
+          const generateEmployeePassword = (name, companyName) => {
+            const namePart = (name || '').replace(/\s+/g, '').substring(0, 3).toLowerCase();
+            const companyPart = (companyName || '').replace(/\s+/g, '').substring(0, 3).toLowerCase();
+            const randomDigits = Math.floor(1000 + Math.random() * 9000).toString();
+            return `${namePart}${companyPart}${randomDigits}`;
+          };
+
+          const organizationName = request.isInternalService ? 'SkillSyncer Platform Support' : request.companyId.name;
+          const autoGeneratedPassword = generateEmployeePassword(request.fullName, organizationName);
+
+          // Create employee user
+          const employee = await User.create({
+            name: request.fullName,
+            email: request.email,
+            password: autoGeneratedPassword,
+            role: 'employee',
+            isActive: true,
+            isEmailVerified: true,
+            employeeProfile: {
+              companyId: request.isInternalService ? null : request.companyId._id,
+              isInternalService: request.isInternalService,
+              joinDate: new Date()
+            }
+          });
+
+
+          // Send credentials email to employee
+          try {
+            await sendEmployeeCredentials(
+              request.email,
+              request.fullName,
+              autoGeneratedPassword,
+              organizationName
+            );
+          } catch (emailError) {
+            console.error('Error sending employee credentials email:', emailError);
+          }
+        }
+      } catch (userCreationError) {
+        console.error('Error creating employee user:', userCreationError);
+        // Don't fail the approval if user creation fails
+      }
+    } else {
+      // Status is REJECTED -> Send rejection email
+      try {
+        const organizationName = request.isInternalService ? 'SkillSyncer Platform Support' : (request.companyId?.name || 'Your Company');
+        await sendRequestRejectionEmail(
+          request.email,
+          request.fullName,
+          'Employee',
+          organizationName,
+          adminNotes
+        );
+      } catch (emailError) {
+        console.error('Error sending rejection notification email:', emailError);
+      }
+    }
+
+    res.json({
+      success: true,
+      message: `Employee request ${status} successfully`,
+      data: request
+    });
+  } catch (error) {
+    console.error('Error updating employee request status:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error updating employee request status',
+      error: error.message
+    });
+  }
+});
+
+// Delete employee request
+router.delete('/employee-requests/:requestId', [protect, adminAuth], async (req, res) => {
+  try {
+    const { requestId } = req.params;
+
+    const request = await EmployeeRequest.findByIdAndDelete(requestId);
+
+    if (!request) {
+      return res.status(404).json({
+        success: false,
+        message: 'Employee request not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Employee request deleted successfully'
+    });
+  } catch (error) {
+    console.error('Error deleting employee request:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error deleting employee request',
+      error: error.message
+    });
+  }
+});
+
+module.exports = router;

@@ -1,0 +1,16 @@
+=== SIMULATING UPDATED API (includes selected status) ===
+Applications found: 6
+
+=== ELIGIBLE JOBSEEKERS (what the API will now return): 2 ===
+
+  [1] Arjun
+      Internship: React Developer
+      Duration: 4/2/2026 -> 19/2/2026 (15 days)
+      Tasks: 8/5 = 100%
+      Status: selected
+
+  [2] Arjun
+      Internship: Java Developer
+      Duration: 3/2/2026 -> 18/2/2026 (15 days)
+      Tasks: 8/5 = 100%
+      Status: selected

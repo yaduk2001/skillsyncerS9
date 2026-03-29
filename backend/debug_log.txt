@@ -1,0 +1,10 @@
+Testing Gemini Generation...
+[Gemini] Attempting generation with model: gemini-2.0-flash-exp
+[Gemini] Attempting generation with model: gemini-1.5-flash
+[Gemini] Attempting generation with model: gemini-1.5-flash-001
+[Gemini] Attempting generation with model: gemini-1.5-pro
+[Gemini] Attempting generation with model: gemini-pro
+[Gemini] Attempting generation with model: gemini-1.0-pro
+[ERROR] [Gemini] All models failed.
+Result Length: 0
+Result: []

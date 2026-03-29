@@ -1,0 +1,16 @@
+Found 3 potentially relevant applications for Jishnu.
+
+PROCESSING App: React Developer (Aimssoft)
+Current Mentor: 695f792823b5bcdd20b16bda
+Allocation Result: SUCCESS
+Assigned Mentor: Salu Manoj (ID: 695f792823b5bcdd20b16bda)
+
+PROCESSING App: Java Developer (Aimssoft)
+Current Mentor: 695f792823b5bcdd20b16bda
+Allocation Result: SUCCESS
+Assigned Mentor: Salu Manoj (ID: 695f792823b5bcdd20b16bda)
+
+PROCESSING App: Python Developer (freshhire)
+Current Mentor: null
+Allocation Result: SUCCESS
+Assigned Mentor: Yadu (ID: 697eead53f4f3927bb335afa)

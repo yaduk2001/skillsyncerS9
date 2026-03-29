@@ -1,0 +1,49 @@
+Found 5 applications (Raw DB Query):
+--------------------------------------------------
+App ID: 698078c4b34b61a868459a35
+Title: React Developer
+Status: "rejected"
+Employer ID: 68c0f7cd7e928c33bc2ccd14
+Employer Name: Aimssoft
+Employer Role: company
+Employer Company: Aimssoft
+Mentor ID (Raw): null
+--------------------------------------------------
+App ID: 698060d2ae9433e16c8dc371
+Title: Java Developer
+Status: "test-assigned"
+Employer ID: 68c0f7cd7e928c33bc2ccd14
+Employer Name: Aimssoft
+Employer Role: company
+Employer Company: Aimssoft
+Mentor ID (Raw): 695f792823b5bcdd20b16bda
+> Mentor Found: Salu Manoj (Company: 68c0f7cd7e928c33bc2ccd14)
+--------------------------------------------------
+App ID: 697ee7cb3f4f3927bb3328d9
+Title: Frontend Developer
+Status: "rejected"
+Employer ID: 68bfc55388027310916fa357
+Employer Name: Codeorbit
+Employer Role: company
+Employer Company: Codeorbit
+Mentor ID (Raw): null
+--------------------------------------------------
+App ID: 6979ddc11bc233855e1215d6
+Title: Python Developer
+Status: "selected"
+Employer ID: 68b3ff21744b20e9d509c742
+Employer Name: freshhire
+Employer Role: company
+Employer Company: freshhire
+Mentor ID (Raw): 697eead53f4f3927bb335afa
+> Mentor Found: Yadu (Company: 68b3ff21744b20e9d509c742)
+--------------------------------------------------
+App ID: 697340d196b9c720fbbb3193
+Title: Software Developer
+Status: "selected"
+Employer ID: 68c0f7cd7e928c33bc2ccd14
+Employer Name: Aimssoft
+Employer Role: company
+Employer Company: Aimssoft
+Mentor ID (Raw): 695f792823b5bcdd20b16bda
+> Mentor Found: Salu Manoj (Company: 68c0f7cd7e928c33bc2ccd14)

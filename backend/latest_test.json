@@ -1,0 +1,100 @@
+{
+  "_id": "698034d24e54beff9f95c773",
+  "applicationId": "697f90ecef8cdf971e4ea2dd",
+  "jobseekerId": "6972fd8bb1c7652f20be4793",
+  "employerId": "68c0f7cd7e928c33bc2ccd14",
+  "internshipId": "697f05b9f774027ed670fdff",
+  "token": "62f53c53-330d-4646-b2b9-14ed6067bccc",
+  "testLink": "http://localhost:5173/test/62f53c53-330d-4646-b2b9-14ed6067bccc",
+  "testExpiry": "2026-02-02T05:31:21.781Z",
+  "questions": [
+    {
+      "question": "Write a Java function to reverse a given string.",
+      "type": "code",
+      "answerKey": "StringBuilder sb = new StringBuilder(str); return sb.reverse().toString();",
+      "starterCode": "public String reverseString(String str) {"
+    },
+    {
+      "question": "Write a Python function to check if a number is prime.",
+      "type": "code",
+      "answerKey": "if num < 2: return False\nfor i in range(2, int(num**0.5) + 1):\n  if num % i == 0: return False\nreturn True",
+      "starterCode": "def is_prime(num):"
+    },
+    {
+      "question": "The following Java code is intended to print numbers from 0 to 4. Fix the bug.",
+      "type": "code",
+      "answerKey": "Change the loop condition from 'i <= 5' to 'i < 5' (or 'i <= 4').",
+      "buggyCode": "for (int i = 0; i <= 5; i++) { System.out.println(i); }",
+      "fix": "for (int i = 0; i < 5; i++) { System.out.println(i); }"
+    },
+    {
+      "question": "Which keyword is used to prevent a class from being subclassed in Java?",
+      "type": "mcq",
+      "answerKey": "final",
+      "options": [
+        "static",
+        "abstract",
+        "final",
+        "private"
+      ]
+    },
+    {
+      "question": "In React, which hook is used for performing side effects in functional components?",
+      "type": "mcq",
+      "answerKey": "useEffect",
+      "options": [
+        "useState",
+        "useContext",
+        "useEffect",
+        "useReducer"
+      ]
+    },
+    {
+      "question": "Which HTML tag is used to define an unordered list?",
+      "type": "text",
+      "answerKey": "<ul>"
+    },
+    {
+      "question": "What OOP principle allows an object to take on many forms?",
+      "type": "text",
+      "answerKey": "Polymorphism"
+    },
+    {
+      "question": "What is the default value of a boolean variable in Java if not explicitly initialized (as a class member)?",
+      "type": "mcq",
+      "answerKey": "false",
+      "options": [
+        "true",
+        "false",
+        "null",
+        "undefined"
+      ]
+    }
+  ],
+  "answers": [
+    "public String reverseString(String str) {\n    if (str == null) return null;\n    return new StringBuilder(str)\n            .reverse()\n.toString();\n}\n",
+    "def is_prime(num):\n    if num <= 1:\n        return False\n    for i in range(2, int(num ** 0.5) + 1):\n        if num % i == 0:\n            return False\n    return True\n",
+    "public class Test {\n    public static void main(String[] args) {\n        for (int i = 0; i <= 4; i++) {\n            System.out.println(i);\n        }\n    }\n}\n",
+    "final",
+    "useEffect",
+    "<ul>",
+    "Polymorphism",
+    "false"
+  ],
+  "correctness": [
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false
+  ],
+  "score": 0,
+  "result": "Failed",
+  "submittedAt": "2026-02-02T05:31:22.781Z",
+  "createdAt": "2026-02-02T05:23:30.231Z",
+  "updatedAt": "2026-02-02T05:31:22.784Z",
+  "__v": 1
+}

@@ -1,0 +1,45 @@
+Apps with mentor (selected/active/completed): 6
+
+Parvathy S | DevOps Engineer | status=selected
+  End: 6/3/2026 | Passed: NO
+  Total tasks: 0
+  All submissions: 0 (0%)
+  Approved only:   0 (0%)
+  Eligible (approved >= 90% && end passed)? NO
+
+Arjun | React Developer | status=selected
+  End: 19/2/2026 | Passed: YES
+  Total tasks: 5
+  All submissions: 8 (160%)
+  Approved only:   3 (60%)
+  Eligible (approved >= 90% && end passed)? NO
+  Submission statuses: {"undefined":2,"rejected":3,"approved":3}
+
+Arjun | Java Developer | status=selected
+  End: 18/2/2026 | Passed: YES
+  Total tasks: 5
+  All submissions: 8 (160%)
+  Approved only:   3 (60%)
+  Eligible (approved >= 90% && end passed)? NO
+  Submission statuses: {"undefined":2,"rejected":3,"approved":3}
+
+Arjun | Python Developer | status=selected
+  End: 13/2/2026 | Passed: YES
+  Total tasks: 0
+  All submissions: 0 (0%)
+  Approved only:   0 (0%)
+  Eligible (approved >= 90% && end passed)? NO
+
+Jishnu dev | Python Developer | status=selected
+  End: 13/2/2026 | Passed: YES
+  Total tasks: 0
+  All submissions: 0 (0%)
+  Approved only:   0 (0%)
+  Eligible (approved >= 90% && end passed)? NO
+
+Jishnu dev | Software Developer | status=selected
+  End: 24/2/2026 | Passed: NO
+  Total tasks: 0
+  All submissions: 0 (0%)
+  Approved only:   0 (0%)
+  Eligible (approved >= 90% && end passed)? NO

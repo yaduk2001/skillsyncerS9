@@ -1,0 +1,30 @@
+Connected to MongoDB
+
+=== DOCUMENT COUNTS ===
+  internshipapplications: 52
+  internshippostings:     16
+  mentortasks:            6
+  mentorsubmissions:      9
+  users:                  21
+
+=== APPLICATIONS WITH MENTOR (active/completed): 0 ===
+
+=== ALL CANDIDATES ===
+  (none found - no applications with a mentor in active/completed status)
+
+========================================
+  ELIGIBLE FOR FEEDBACK: 0
+========================================
+  No jobseekers currently meet BOTH criteria:
+    1. Internship end date has passed (today or before)
+    2. Submission progress >= 90%
+
+=== DATA SOURCE COLLECTIONS ===
+  1. internshipapplications  - Links jobseeker <-> mentor <-> internship, status, internshipDetails (title, startDate, duration)
+  2. internshippostings      - Original posting with startDate, duration, title (fallback)
+  3. mentortasks             - Tasks assigned by mentor; assignedTo[] has jobseeker IDs => "Tasks Assigned"
+  4. mentorsubmissions       - Submissions by mentees for tasks => "Tasks Submitted"
+  5. users                   - Jobseeker name, email
+
+  FORMULA: progress = (mentorsubmissions count / mentortasks count) * 100
+  CRITERIA: (endDate <= today OR status === "completed") AND progress >= 90%

@@ -1,0 +1,27 @@
+--- ALLOCATION MISMATCH INSPECTION ---
+Mentor: Salu Manoj (ID: 695f792823b5bcdd20b16bda)
+Mentor Role: employee
+Mentor Company ID (EmployeeProfile): 68c0f7cd7e928c33bc2ccd14
+Mentor Company Name: Aimssoft (ID: 68c0f7cd7e928c33bc2ccd14)
+
+Found 2 jobseekers assigned to this mentor.
+
+Checking Jobseeker: Jishnu dev (ID: 68f532910eaf75ca905168cf)
+  Passed Application found (ID: 6979ddc11bc233855e1215d6):
+  - Title: Python Developer
+  - Company Name in Details: undefined
+  - Employer Name (linked User): freshhire
+  - Employer ID (linked User): 68b3ff21744b20e9d509c742
+  - MATCHES MENTOR COMPANY? NO
+  *** MISMATCH DETECTED ***
+  Mentor Company: Aimssoft
+  App Employer: freshhire
+
+Checking Jobseeker: Arjun (ID: 6972fd8bb1c7652f20be4793)
+  Passed Application found (ID: 6980b89a0697ff023ca14a55):
+  - Title: React Developer
+  - Company Name in Details: undefined
+  - Employer Name (linked User): Aimssoft
+  - Employer ID (linked User): 68c0f7cd7e928c33bc2ccd14
+  - MATCHES MENTOR COMPANY? YES
+  Allocation seems logic-compliant (Ids match).

@@ -1,0 +1,136 @@
+Current date: 19/2/2026
+
+Total applications with mentorId: 7
+
+--- Jishnu dev (athulyaarun2026@mca.ajce.in) ---
+  Internship: Software Developer
+  Status: selected
+  Start: 24/1/2026
+  End:   24/2/2026
+  Duration: 1 month
+  End date passed? NO
+  Tasks: 0/0 = 0%
+  Progress >= 90%? NO
+  >> ELIGIBLE? NO - end date not passed
+
+--- Jishnu dev (athulyaarun2026@mca.ajce.in) ---
+  Internship: Python Developer
+  Status: selected
+  Start: 29/1/2026
+  End:   13/2/2026
+  Duration: 15 days
+  End date passed? YES
+  Tasks: 0/0 = 0%
+  Progress >= 90%? NO
+  >> ELIGIBLE? NO - progress < 90%
+
+--- Arjun (arjunlputhuvelil333@gmail.com) ---
+  Internship: Python Developer
+  Status: selected
+  Start: 29/1/2026
+  End:   13/2/2026
+  Duration: 15 days
+  End date passed? YES
+  Tasks: 0/0 = 0%
+  Progress >= 90%? NO
+  >> ELIGIBLE? NO - progress < 90%
+
+--- Arjun (arjunlputhuvelil333@gmail.com) ---
+  Internship: Java Developer
+  Status: selected
+  Start: 3/2/2026
+  End:   18/2/2026
+  Duration: 15 days
+  End date passed? YES
+  Tasks: 8/5 = 100%
+  Progress >= 90%? YES
+  >> ELIGIBLE? YES
+
+--- Jishnu dev (athulyaarun2026@mca.ajce.in) ---
+  Internship: Java Developer
+  Status: test-assigned
+  Start: 3/2/2026
+  End:   18/2/2026
+  Duration: 15 days
+  End date passed? YES
+  Tasks: 0/0 = 0%
+  Progress >= 90%? NO
+  >> ELIGIBLE? NO - progress < 90%
+
+--- Arjun (arjunlputhuvelil333@gmail.com) ---
+  Internship: React Developer
+  Status: selected
+  Start: 4/2/2026
+  End:   19/2/2026
+  Duration: 15 days
+  End date passed? YES
+  Tasks: 8/5 = 100%
+  Progress >= 90%? YES
+  >> ELIGIBLE? YES
+
+--- Parvathy S (parvathys2026@mca.ajce.in) ---
+  Internship: DevOps Engineer
+  Status: selected
+  Start: 6/2/2026
+  End:   6/3/2026
+  Duration: 1 month
+  End date passed? NO
+  Tasks: 0/0 = 0%
+  Progress >= 90%? NO
+  >> ELIGIBLE? NO - end date not passed
+
+=== ALL 52 APPLICATIONS END DATE CHECK ===
+  Surya Sunil | status=rejected | mentor=no | end=11/1/2026 | passed=YES
+  ? | status=rejected | mentor=no | end=10/4/2026 | passed=no
+  ? | status=rejected | mentor=no | end=1/12/2025 | passed=YES
+  Surya Sunil | status=rejected | mentor=no | end=16/4/2026 | passed=no
+  Parvathy S | status=rejected | mentor=no | end=18/11/2025 | passed=YES
+  Parvathy S | status=rejected | mentor=no | end=18/11/2025 | passed=YES
+  Parvathy S | status=rejected | mentor=no | end=1/12/2025 | passed=YES
+  ? | status=rejected | mentor=no | end=18/11/2025 | passed=YES
+  ? | status=rejected | mentor=no | end=18/11/2025 | passed=YES
+  ? | status=selected | mentor=no | end=1/12/2025 | passed=YES
+  ? | status=rejected | mentor=no | end=20/11/2025 | passed=YES
+  Parvathy S | status=rejected | mentor=no | end=20/11/2025 | passed=YES
+  Parvathy S | status=rejected | mentor=no | end=20/11/2025 | passed=YES
+  Surya Sunil | status=rejected | mentor=no | end=20/11/2025 | passed=YES
+  ? | status=selected | mentor=no | end=1/12/2025 | passed=YES
+  ? | status=rejected | mentor=no | end=22/11/2025 | passed=YES
+  ? | status=selected | mentor=no | end=22/11/2025 | passed=YES
+  Parvathy S | status=selected | mentor=no | end=22/11/2025 | passed=YES
+  ? | status=test-assigned | mentor=no | end=22/11/2025 | passed=YES
+  ? | status=rejected | mentor=no | end=23/11/2025 | passed=YES
+  ? | status=rejected | mentor=no | end=23/11/2025 | passed=YES
+  ? | status=test-assigned | mentor=no | end=22/11/2025 | passed=YES
+  ? | status=rejected | mentor=no | end=23/11/2025 | passed=YES
+  ? | status=rejected | mentor=no | end=1/12/2025 | passed=YES
+  Parvathy S | status=selected | mentor=no | end=15/7/2026 | passed=no
+  ? | status=rejected | mentor=no | end=24/2/2026 | passed=no
+  Surya Sunil | status=rejected | mentor=no | end=24/2/2026 | passed=no
+  ? | status=rejected | mentor=no | end=24/2/2026 | passed=no
+  Parvathy S | status=rejected | mentor=no | end=24/2/2026 | passed=no
+  Arjun | status=rejected | mentor=no | end=25/2/2026 | passed=no
+  Arjun | status=rejected | mentor=no | end=24/2/2026 | passed=no
+  Jishnu dev | status=selected | mentor=yes | end=24/2/2026 | passed=no
+  Surya Sunil | status=selected | mentor=no | end=13/2/2026 | passed=YES
+  ? | status=selected | mentor=no | end=27/7/2026 | passed=no
+  ? | status=selected | mentor=no | end=27/7/2026 | passed=no
+  ? | status=selected | mentor=no | end=N/A | passed=no
+  Jishnu dev | status=selected | mentor=yes | end=13/2/2026 | passed=YES
+  Aby Joykutty | status=rejected | mentor=no | end=13/2/2026 | passed=YES
+  Arjun | status=selected | mentor=yes | end=13/2/2026 | passed=YES
+  Arjun | status=rejected | mentor=no | end=17/2/2026 | passed=YES
+  Parvathy S | status=selected | mentor=no | end=17/2/2026 | passed=YES
+  Jishnu dev | status=rejected | mentor=no | end=17/2/2026 | passed=YES
+  Surya Sunil | status=rejected | mentor=no | end=17/2/2026 | passed=YES
+  Surya Sunil | status=rejected | mentor=no | end=18/2/2026 | passed=YES
+  Parvathy S | status=selected | mentor=no | end=18/2/2026 | passed=YES
+  Arjun | status=selected | mentor=yes | end=18/2/2026 | passed=YES
+  Jishnu dev | status=test-assigned | mentor=yes | end=18/2/2026 | passed=YES
+  Jishnu dev | status=rejected | mentor=no | end=19/2/2026 | passed=YES
+  Arjun | status=selected | mentor=yes | end=19/2/2026 | passed=YES
+  Jishnu dev | status=shortlisted | mentor=no | end=6/3/2026 | passed=no
+  Parvathy S | status=selected | mentor=yes | end=6/3/2026 | passed=no
+  Jishnu dev | status=test-assigned | mentor=no | end=22/2/2026 | passed=no
+
+Total with end date passed: 36 / 52

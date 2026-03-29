@@ -1,0 +1,21 @@
+﻿[dotenv@17.2.1] injecting env (14) from .env -- tip: ≡ƒôí version env with Radar: https://dotenvx.com/radar
+STATUS DISTRIBUTION:
+  shortlisted: 1
+  rejected: 30
+  test-assigned: 4
+  selected: 17
+
+With mentorId assigned: 7
+With mentor by status:
+  selected: 6
+  test-assigned: 1
+
+Sample app with mentor:
+  _id: 697340d196b9c720fbbb3193
+  status: selected
+  mentorId: 695f792823b5bcdd20b16bda
+  jobseekerId: 68f532910eaf75ca905168cf
+  internshipDetails: {"title":"Software Developer","type":"Paid","duration":"1 month","startDate":"2026-01-24T00:00:00.000Z","workMode":"online","eligibility":"Both"}
+
+Mentor IDs in mentortasks: [ '695f792823b5bcdd20b16bda', '69688c6fa5df88bee8389c22' ]
+AssignedTo user IDs in mentortasks: [ '68bfc33988027310916fa31b', '6972fd8bb1c7652f20be4793' ]
