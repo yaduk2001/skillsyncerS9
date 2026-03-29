@@ -921,7 +921,8 @@ const EmployerDashboard = () => {
     { name: 'Mentors', icon: Award, section: 'mentors', current: activeSection === 'mentors' },
     { name: 'Employees', icon: Users, section: 'employees', current: activeSection === 'employees' },
     { name: 'Employee Requests', icon: UserCheck, section: 'employee-requests', current: activeSection === 'employee-requests' },
-    { name: 'Generate Questions', icon: FileText, section: 'generate-questions', current: activeSection === 'generate-questions' }
+    { name: 'Generate Questions', icon: FileText, section: 'generate-questions', current: activeSection === 'generate-questions' },
+    { name: 'Trending Projects', icon: TrendingUp, section: 'trending-projects', current: activeSection === 'trending-projects' }
   ];
 
   const renderSectionContent = () => {
@@ -1004,6 +1005,82 @@ const EmployerDashboard = () => {
 
       case 'employee-requests':
         return <EmployerEmployeeRequests />;
+
+      case 'trending-projects': {
+        const TrendingProjects = () => {
+          const [trendingProjects, setTrendingProjects] = React.useState([]);
+          const [trendingLoading, setTrendingLoading] = React.useState(false);
+          const [trendingSearch, setTrendingSearch] = React.useState('');
+
+          React.useEffect(() => {
+            const load = async () => {
+              setTrendingLoading(true);
+              try {
+                const token = localStorage.getItem('token');
+                const params = new URLSearchParams({ limit: '20' });
+                if (trendingSearch) params.append('search', trendingSearch);
+                const resp = await fetch(`${API_BASE_URL}/api/projects?${params}`, { headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' } });
+                const data = await resp.json();
+                if (data.success) setTrendingProjects(data.data.projects || []);
+              } catch (e) { console.error(e); }
+              finally { setTrendingLoading(false); }
+            };
+            load();
+          }, [trendingSearch]);
+
+          return (
+            <div className="space-y-6">
+              <div className="bg-white rounded-2xl shadow p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2"><TrendingUp className="w-5 h-5 text-indigo-600" /> Trending Projects</h2>
+                    <p className="text-sm text-gray-500 mt-1">Explore academic project templates created by students</p>
+                  </div>
+                  <div className="flex items-center gap-2 bg-gray-100 rounded-xl px-3 py-2">
+                    <Search className="h-4 w-4 text-gray-500" />
+                    <input placeholder="Search projects..." value={trendingSearch} onChange={(e) => setTrendingSearch(e.target.value)} className="bg-transparent outline-none text-sm text-gray-700 w-48" />
+                  </div>
+                </div>
+                {trendingLoading ? (
+                  <div className="text-center py-12 text-gray-500">Loading projects...</div>
+                ) : trendingProjects.length === 0 ? (
+                  <div className="text-center py-12 text-gray-500">No projects found</div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {trendingProjects.map((p) => (
+                      <div key={p._id} className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg transition-all group">
+                        {p.screenshotsLink && (
+                          <div className="h-40 overflow-hidden bg-gray-100">
+                            <img src={p.screenshotsLink} alt={p.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                          </div>
+                        )}
+                        <div className="p-5">
+                          <div className="flex items-center gap-2 mb-3">
+                            <span className="text-xs font-semibold text-indigo-600 bg-indigo-50 px-2 py-1 rounded-full">{p.category || 'General'}</span>
+                            <span className="text-xs font-semibold text-gray-500 bg-gray-100 px-2 py-1 rounded-full">{p.difficulty}</span>
+                          </div>
+                          <h3 className="font-bold text-gray-900 mb-2 truncate">{p.title}</h3>
+                          <p className="text-sm text-gray-500 line-clamp-2 mb-3">{p.description}</p>
+                          <div className="flex flex-wrap gap-1 mb-3">
+                            {(p.techStack || []).slice(0, 3).map((t, i) => (
+                              <span key={i} className="text-xs bg-gray-50 text-gray-600 px-2 py-1 rounded">{t}</span>
+                            ))}
+                          </div>
+                          <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+                            <span className="font-bold text-gray-900">{p.price > 0 ? `\u20b9${p.price}` : 'FREE'}</span>
+                            <span className="text-xs text-gray-400">{p.domain || 'Technology'}</span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        };
+        return <TrendingProjects />;
+      }
 
       default:
         return (

@@ -9,12 +9,17 @@ const { protect } = require('../middleware/auth');
 // ============================================================
 router.get('/', protect, async (req, res) => {
   try {
-    const { search, category, difficulty, page = 1, limit = 12 } = req.query;
+    const { search, category, difficulty, minPrice, maxPrice, page = 1, limit = 12 } = req.query;
 
     const filter = { status: 'active' };
 
     if (category) filter.category = category;
     if (difficulty) filter.difficulty = difficulty;
+    if (minPrice || maxPrice) {
+      filter.price = {};
+      if (minPrice) filter.price.$gte = Number(minPrice);
+      if (maxPrice) filter.price.$lte = Number(maxPrice);
+    }
     if (search) {
       filter.$or = [
         { title:       { $regex: search, $options: 'i' } },

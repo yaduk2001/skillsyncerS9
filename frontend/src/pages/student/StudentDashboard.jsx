@@ -68,6 +68,7 @@ const StudentDashboard = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterDifficulty, setFilterDifficulty] = useState('');
   const [filterCategory, setFilterCategory] = useState('');
+  const [filterPrice, setFilterPrice] = useState('');
 
   // Form states
   const [showRequestForm, setShowRequestForm] = useState(false);
@@ -78,9 +79,7 @@ const StudentDashboard = () => {
   // Purchases / Payment state
   const [purchases, setPurchases] = useState([]);
   const [purchasesLoading, setPurchasesLoading] = useState(false);
-  const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [selectedProjectToBuy, setSelectedProjectToBuy] = useState(null);
-  const [simPaymentStep, setSimPaymentStep] = useState('selection'); // 'selection' | 'processing' | 'success'
+
 
   // Project Details state
   const [selectedProject, setSelectedProject] = useState(null);
@@ -145,6 +144,10 @@ const StudentDashboard = () => {
       if (searchTerm)       params.append('search', searchTerm);
       if (filterDifficulty) params.append('difficulty', filterDifficulty);
       if (filterCategory)   params.append('category', filterCategory);
+      if (filterPrice === 'free')       { params.append('maxPrice', '0'); }
+      else if (filterPrice === 'under500')  { params.append('minPrice', '1'); params.append('maxPrice', '500'); }
+      else if (filterPrice === 'under1000') { params.append('minPrice', '1'); params.append('maxPrice', '1000'); }
+      else if (filterPrice === '1000plus')  { params.append('minPrice', '1000'); }
       const response = await fetch(`${API_BASE_URL}/api/projects?${params}`, { headers: getAuthHeaders() });
       const data = await response.json();
       if (data.success) {
@@ -550,6 +553,34 @@ const StudentDashboard = () => {
                   <option value="intermediate">Intermediate</option>
                   <option value="advanced">Advanced</option>
                 </select>
+                <select
+                  value={filterCategory}
+                  onChange={(e) => { setFilterCategory(e.target.value); setCurrentPage(1); }}
+                  className="px-6 py-3 bg-slate-50 border-none rounded-2xl text-sm font-bold text-slate-600 outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer shadow-inner"
+                >
+                  <option value="">All Categories</option>
+                  <option value="Web Development">Web Development</option>
+                  <option value="Mobile App">Mobile App</option>
+                  <option value="Machine Learning">Machine Learning</option>
+                  <option value="Data Science">Data Science</option>
+                  <option value="IoT">IoT</option>
+                  <option value="Blockchain">Blockchain</option>
+                  <option value="Cybersecurity">Cybersecurity</option>
+                  <option value="Cloud Computing">Cloud Computing</option>
+                  <option value="Game Development">Game Development</option>
+                  <option value="Other">Other</option>
+                </select>
+                <select
+                  value={filterPrice}
+                  onChange={(e) => { setFilterPrice(e.target.value); setCurrentPage(1); }}
+                  className="px-6 py-3 bg-slate-50 border-none rounded-2xl text-sm font-bold text-slate-600 outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer shadow-inner"
+                >
+                  <option value="">All Prices</option>
+                  <option value="free">Free</option>
+                  <option value="under500">Under ₹500</option>
+                  <option value="under1000">Under ₹1000</option>
+                  <option value="1000plus">₹1000+</option>
+                </select>
               </div>
 
               {/* Cards Grid */}
@@ -930,66 +961,7 @@ const StudentDashboard = () => {
         )}
       </main>
 
-      {/* ============ RAZORPAY SIMULATION MODAL ============ */}
-      <AnimatePresence>
-        {showPaymentModal && selectedProjectToBuy && (
-          <motion.div
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[60] bg-slate-900/80 backdrop-blur-md flex items-center justify-center p-4"
-          >
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.9, opacity: 0, y: 20 }}
-              className="bg-white rounded-[2.5rem] max-w-lg w-full overflow-hidden shadow-2xl relative"
-            >
-              {simPaymentStep === 'selection' && (
-                <div className="p-8">
-                  <div className="flex items-center justify-between mb-8">
-                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-100">
-                           <Zap className="w-6 h-6 text-white" />
-                        </div>
-                        <span className="font-black text-xl tracking-tight text-slate-900">Razorpay <span className="text-[10px] bg-slate-100 px-2 py-0.5 rounded text-slate-400 font-bold ml-2">TEST</span></span>
-                     </div>
-                     <button onClick={() => setShowPaymentModal(false)} className="p-2 hover:bg-slate-50 rounded-full transition-colors"><X className="w-5 h-5 text-slate-400" /></button>
-                  </div>
 
-                  <div className="bg-slate-50 rounded-2xl p-6 mb-8 border border-slate-100">
-                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Order Summary</p>
-                     <h4 className="text-lg font-black text-slate-900 truncate mb-4">{selectedProjectToBuy.title}</h4>
-                     <div className="flex justify-between items-end">
-                        <span className="text-sm font-bold text-slate-500">{localStorage.getItem('userEmail')}</span>
-                        <span className="text-3xl font-black text-slate-900 tracking-tighter">₹{selectedProjectToBuy.price || 500}</span>
-                     </div>
-                  </div>
-
-                  <div className="space-y-4">
-                     <button onClick={simulateRazorpayPayment} className="w-full py-4 bg-indigo-600 text-white rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-100">Pay Securely</button>
-                     <p className="text-center text-[10px] font-bold text-slate-400 uppercase tracking-widest">Powered by Razorpay Simulation</p>
-                  </div>
-                </div>
-              )}
-
-              {simPaymentStep === 'processing' && (
-                <div className="p-16 text-center">
-                  <div className="w-20 h-20 border-4 border-indigo-100 border-t-indigo-600 rounded-full animate-spin mx-auto mb-8"></div>
-                  <h3 className="text-2xl font-black text-slate-900 mb-2">Processing Payment</h3>
-                  <p className="text-slate-400 font-bold text-sm uppercase tracking-widest">Please do not refresh your browser</p>
-                </div>
-              )}
-
-              {simPaymentStep === 'success' && (
-                <div className="p-16 text-center">
-                  <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="w-24 h-24 bg-emerald-500 rounded-full flex items-center justify-center mx-auto mb-8 shadow-2xl shadow-emerald-200">
-                     <Check className="w-12 h-12 text-white stroke-[4px]" />
-                  </motion.div>
-                  <h3 className="text-3xl font-black text-slate-900 mb-2">Payment Successful</h3>
-                  <p className="text-slate-500 font-bold text-sm mb-8 leading-relaxed">Your transaction was successful. Redirecting you to your projects...</p>
-                </div>
-              )}
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       {/* ============ CUSTOMIZATION REQUEST FORM MODAL ============ */}
       <AnimatePresence>

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { dashboardApi, apiRequest, jobseekerApi } from '../utils/api';
+import { API_BASE_URL } from '../config/api';
 import JobseekerProfileManager from '../components/JobseekerProfileManager';
 import InternshipApplicationForm from '../components/InternshipApplicationForm';
 import ApplicationStatus from '../components/ApplicationStatus';
@@ -606,6 +607,12 @@ const JobseekerDashboard = () => {
       icon: BookmarkIcon,
       section: 'saved',
       current: activeSection === 'saved'
+    },
+    {
+      name: 'Project Templates',
+      icon: Code,
+      section: 'project-templates',
+      current: activeSection === 'project-templates'
     },
     {
       name: 'Settings',
@@ -1351,6 +1358,82 @@ const JobseekerDashboard = () => {
             </motion.div>
           </div>
         );
+
+      case 'project-templates': {
+        const ProjectTemplatesBrowse = () => {
+          const [templateProjects, setTemplateProjects] = React.useState([]);
+          const [templatesLoading, setTemplatesLoading] = React.useState(false);
+          const [templateSearch, setTemplateSearch] = React.useState('');
+
+          React.useEffect(() => {
+            const loadTemplates = async () => {
+              setTemplatesLoading(true);
+              try {
+                const token = localStorage.getItem('token');
+                const params = new URLSearchParams({ limit: '20' });
+                if (templateSearch) params.append('search', templateSearch);
+                const resp = await fetch(`${API_BASE_URL}/api/projects?${params}`, { headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' } });
+                const data = await resp.json();
+                if (data.success) setTemplateProjects(data.data.projects || []);
+              } catch (e) { console.error(e); }
+              finally { setTemplatesLoading(false); }
+            };
+            loadTemplates();
+          }, [templateSearch]);
+
+          return (
+            <div className="space-y-6">
+              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-white/70 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2"><Code className="w-5 h-5 text-blue-600" /> Project Templates</h2>
+                    <p className="text-sm text-gray-500 mt-1">Browse academic project templates for portfolio inspiration</p>
+                  </div>
+                  <div className="flex items-center gap-2 bg-gray-100 rounded-xl px-3 py-2">
+                    <Search className="h-4 w-4 text-gray-500" />
+                    <input placeholder="Search templates..." value={templateSearch} onChange={(e) => setTemplateSearch(e.target.value)} className="bg-transparent outline-none text-sm text-gray-700 w-48" />
+                  </div>
+                </div>
+                {templatesLoading ? (
+                  <div className="text-center py-12"><Loader className="animate-spin h-8 w-8 text-blue-600 mx-auto mb-4" /><p className="text-gray-500">Loading templates...</p></div>
+                ) : templateProjects.length === 0 ? (
+                  <div className="text-center py-12 text-gray-500">No project templates found</div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {templateProjects.map((p) => (
+                      <div key={p._id} className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-lg transition-all group">
+                        {p.screenshotsLink && (
+                          <div className="h-40 overflow-hidden bg-gray-100">
+                            <img src={p.screenshotsLink} alt={p.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                          </div>
+                        )}
+                        <div className="p-5">
+                          <div className="flex items-center gap-2 mb-3">
+                            <span className="text-xs font-semibold text-blue-600 bg-blue-50 px-2 py-1 rounded-full">{p.category || 'General'}</span>
+                            <span className="text-xs font-semibold text-gray-500 bg-gray-100 px-2 py-1 rounded-full">{p.difficulty}</span>
+                          </div>
+                          <h3 className="font-bold text-gray-900 mb-2 truncate">{p.title}</h3>
+                          <p className="text-sm text-gray-500 line-clamp-2 mb-3">{p.description}</p>
+                          <div className="flex flex-wrap gap-1 mb-3">
+                            {(p.techStack || []).slice(0, 3).map((t, i) => (
+                              <span key={i} className="text-xs bg-gray-50 text-gray-600 px-2 py-1 rounded">{t}</span>
+                            ))}
+                          </div>
+                          <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+                            <span className="font-bold text-gray-900">{p.price > 0 ? `\u20b9${p.price}` : 'FREE'}</span>
+                            <span className="text-xs text-gray-400">{p.domain || 'Technology'}</span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </motion.div>
+            </div>
+          );
+        };
+        return <ProjectTemplatesBrowse />;
+      }
 
       default:
         return null;
