@@ -33,6 +33,7 @@ router.get('/:token', async (req, res) => {
         token: testDoc.token,
         expiresAt: testDoc.testExpiry,
         internshipTitle,
+        durationMinutes: testDoc.durationMinutes || 60,
         // Strip any answerKey or hidden fields before sending to client
         questions: (testDoc.questions || []).map(q => {
           const { answerKey, ...rest } = q || {};
@@ -84,10 +85,10 @@ router.post('/preview', protect, async (req, res) => {
 
 // Assign a test to a shortlisted candidate
 // POST /api/tests/assign
-// body: { applicationId, expiresInHours? }
+// body: { applicationId, expiresInHours?, questions?, durationMinutes? }
 router.post('/assign', protect, async (req, res) => {
   try {
-    const { applicationId, expiresInHours = 24 } = req.body;
+    const { applicationId, expiresInHours = 24, questions: providedQuestions, durationMinutes = 60 } = req.body;
     if (!applicationId) {
       return res.status(400).json({ success: false, message: 'applicationId is required' });
     }
@@ -120,8 +121,11 @@ router.post('/assign', protect, async (req, res) => {
     const title = application?.internshipDetails?.title || 'Internship';
     const skills = application?.skills?.technicalSkills || [];
 
-    // Generate questions using Gemini
-    let questions = await generateTestQuestions(title, skills);
+    // Generate questions using Gemini if not provided
+    let questions = providedQuestions;
+    if (!questions || !Array.isArray(questions) || questions.length === 0) {
+      questions = await generateTestQuestions(title, skills);
+    }
 
     // Fallback?
     if (!questions || questions.length === 0) {
@@ -143,7 +147,8 @@ router.post('/assign', protect, async (req, res) => {
       token,
       testLink,
       testExpiry: expiry,
-      questions
+      questions,
+      durationMinutes
     });
 
     // Update application

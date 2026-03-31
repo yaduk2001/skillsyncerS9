@@ -53,6 +53,10 @@ const TestSchema = new mongoose.Schema({
     max: 100,
     default: null
   },
+  durationMinutes: {
+    type: Number,
+    default: 60
+  },
   result: {
     type: String,
     enum: ['Passed', 'Failed', null],

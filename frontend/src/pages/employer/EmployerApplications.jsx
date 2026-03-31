@@ -164,7 +164,7 @@ const EmployerApplications = ({
                             <button
                               className="inline-flex items-center gap-1 text-indigo-600 hover:underline disabled:opacity-50"
                               disabled={assigningTest}
-                              onClick={() => assignTest(application._id)}
+                              onClick={() => assignTest(application)}
                             >
                               Assign Test
                             </button>

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { Clock, AlertTriangle } from 'lucide-react';
 import { testsApi } from '../utils/api';
 
 const TestScreen = () => {
@@ -20,6 +21,8 @@ const TestScreen = () => {
   const [mentorAssignment, setMentorAssignment] = useState(null);
   const [totalQuestions, setTotalQuestions] = useState(0);
   const [submitError, setSubmitError] = useState(null);
+  const [timeLeft, setTimeLeft] = useState(null);
+  const [isTimeUp, setIsTimeUp] = useState(false);
 
   useEffect(() => {
     const fetchTest = async () => {
@@ -36,6 +39,9 @@ const TestScreen = () => {
           setTest(t);
           setAnswers(new Array((t.questions || []).length).fill(''));
           setTotalQuestions((t.questions || []).length);
+          if (!t.submittedAt && !t.expired) {
+            setTimeLeft((t.durationMinutes || 60) * 60);
+          }
         } else {
           setError(res.data?.message || 'Invalid or expired test link');
         }
@@ -48,8 +54,32 @@ const TestScreen = () => {
     fetchTest();
   }, [token]);
 
+  // Timer Countdown Effect
+  useEffect(() => {
+    if (timeLeft === null || timeLeft <= 0 || result || submitting || isTimeUp) return;
+
+    const timer = setInterval(() => {
+      setTimeLeft(prev => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          setIsTimeUp(true);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [timeLeft, result, submitting, isTimeUp]);
+
+  // Auto-submit when time is up
+  useEffect(() => {
+    if (isTimeUp && !result && !submitting) {
+      handleSubmit({ preventDefault: () => {} });
+    }
+  }, [isTimeUp]);
+
   const handleSubmit = async (e) => {
-    e.preventDefault();
+    if (e && e.preventDefault) e.preventDefault();
     setSubmitError(null);
     if (!test || test.expired) return;
     try {
@@ -117,7 +147,15 @@ const TestScreen = () => {
         <div className="bg-white/90 backdrop-blur-md rounded-3xl shadow-2xl p-6 sm:p-8 border border-white/30">
           <div className="mb-6">
             <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-gray-900">Assessment{test.internshipTitle ? ` • ${test.internshipTitle}` : ''}</h1>
-            <p className="text-sm text-gray-600">Deadline: {new Date(test.expiresAt).toLocaleString()}</p>
+            <div className="flex justify-between items-center mt-2">
+              <p className="text-sm text-gray-600">Deadline: {new Date(test.expiresAt).toLocaleString()}</p>
+              {timeLeft !== null && !result && !test.expired && (
+                <div className={`flex items-center gap-2 px-4 py-2 rounded-full font-bold shadow-sm ${timeLeft < 300 ? 'bg-red-100 text-red-700 animate-pulse' : 'bg-blue-50 text-blue-700 border border-blue-100'}`}>
+                  <Clock className="w-5 h-5" />
+                  {Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, '0')}
+                </div>
+              )}
+            </div>
             {test.expired && (
               <p className="mt-2 text-sm text-red-600">This test link has expired.</p>
             )}
@@ -311,20 +349,27 @@ const TestScreen = () => {
                   {submitError}
                 </div>
               )}
+              {isTimeUp && !result && (
+                <div className="p-4 mb-4 bg-yellow-50 border border-yellow-200 text-yellow-800 rounded-xl flex items-center">
+                  <AlertTriangle className="w-5 h-5 mr-2 flex-shrink-0" />
+                  Time is up! Submitting your answers automatically...
+                </div>
+              )}
 
               <div className="flex items-center justify-between">
                 <button
                   type="button"
                   onClick={() => navigate('/jobseeker-dashboard')}
-                  className="px-4 py-2 border border-gray-300 rounded-lg"
+                  className="px-4 py-2 border border-gray-300 rounded-lg shadow-sm font-medium hover:bg-gray-50"
+                  disabled={submitting && isTimeUp}
                 >
                   Back to Dashboard
                 </button>
                 {!result && !test.expired && (
                   <button
                     type="submit"
-                    disabled={submitting}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg disabled:opacity-50"
+                    disabled={submitting || isTimeUp}
+                    className="px-6 py-2 bg-blue-600 text-white rounded-lg disabled:opacity-50 shadow-md font-semibold hover:bg-blue-700"
                   >
                     {submitting ? 'Submitting...' : 'Submit Test'}
                   </button>

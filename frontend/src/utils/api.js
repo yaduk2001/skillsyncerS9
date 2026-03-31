@@ -388,9 +388,9 @@ export const employerApi = {
   }),
 
   // Assign online test to shortlisted application
-  assignTest: (applicationId, expiresInHours = 24) => apiRequest('/api/tests/assign', {
+  assignTest: (applicationId, expiresInHours = 24, questions = null, durationMinutes = 60) => apiRequest('/api/tests/assign', {
     method: 'POST',
-    body: JSON.stringify({ applicationId, expiresInHours }),
+    body: JSON.stringify({ applicationId, expiresInHours, questions, durationMinutes }),
   }),
 
   resetTest: (applicationId) => apiRequest('/api/tests/reset', {

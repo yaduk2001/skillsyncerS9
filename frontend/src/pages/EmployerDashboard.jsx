@@ -148,6 +148,10 @@ const EmployerDashboard = () => {
   const [showStatusModal, setShowStatusModal] = useState(false);
   const [statusUpdateData, setStatusUpdateData] = useState({ applicationId: null, newStatus: '', notes: '' });
   const [assigningTest, setAssigningTest] = useState(false);
+  const [showTestPreviewModal, setShowTestPreviewModal] = useState(false);
+  const [testPreviewData, setTestPreviewData] = useState(null);
+  const [testDuration, setTestDuration] = useState(60);
+  const [applicationForTest, setApplicationForTest] = useState(null);
   const [showMentorRequestForm, setShowMentorRequestForm] = useState(false);
   const [employees, setEmployees] = useState([]);
   const [loadingEmployees, setLoadingEmployees] = useState(false);
@@ -677,13 +681,48 @@ const EmployerDashboard = () => {
     setStatusUpdateData({ applicationId: null, newStatus: '', notes: '' });
   };
 
-  // Assign test to shortlisted application
-  const assignTest = async (applicationId) => {
+  // Assign test: Step 1 - Generate questions and show preview modal
+  const assignTest = async (application) => {
     try {
       setAssigningTest(true);
-      const resp = await employerApi.assignTest(applicationId, 24);
+      setApplicationForTest(application);
+      
+      const title = application?.internshipDetails?.title || 'Internship';
+      const skills = application?.skills?.technicalSkills || [];
+      
+      const resp = await testsApi.preview(title, skills, 'gemini', 'gemini');
+      if (resp.success && resp.data?.data?.questions) {
+        setTestPreviewData(resp.data.data.questions);
+        setTestDuration(60);
+        setShowTestPreviewModal(true);
+      } else {
+        setError('Failed to generate test preview');
+        setTimeout(() => setError(null), 5000);
+      }
+    } catch (e) {
+      setError(e.message || 'Failed to generate test preview');
+      setTimeout(() => setError(null), 5000);
+    } finally {
+      setAssigningTest(false);
+    }
+  };
+
+  // Assign test: Step 2 - Confirm assignment with questions and duration
+  const confirmAssignTest = async () => {
+    if (!applicationForTest) return;
+    try {
+      setAssigningTest(true);
+      const resp = await employerApi.assignTest(
+        applicationForTest._id,
+        24, // expiresInHours
+        testPreviewData,
+        testDuration
+      );
       if (resp.success) {
         setSuccessMessage('Test assigned successfully');
+        setShowTestPreviewModal(false);
+        setApplicationForTest(null);
+        setTestPreviewData(null);
         setTimeout(() => setSuccessMessage(null), 3000);
         loadApplications();
       } else {
@@ -2554,6 +2593,126 @@ const EmployerDashboard = () => {
                   Update Status
                 </motion.button>
               </div>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+
+      {/* Test Preview & Assign Modal */}
+      {showTestPreviewModal && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto"
+          onClick={() => setShowTestPreviewModal(false)}
+        >
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.9, opacity: 0 }}
+            className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full my-8 flex flex-col max-h-[90vh]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="bg-gradient-to-r from-indigo-500 to-purple-600 px-6 py-4 rounded-t-2xl flex justify-between items-center shrink-0">
+              <div className="flex items-center">
+                <div className="h-10 w-10 bg-white/20 rounded-full flex items-center justify-center mr-3">
+                  <FileText className="h-5 w-5 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-white">Review & Assign Test</h3>
+                  <p className="text-indigo-100 text-sm">Review questions and set time limit</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setShowTestPreviewModal(false)}
+                className="text-white/80 hover:text-white"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            {/* Content area - scrollable */}
+            <div className="px-6 py-6 overflow-y-auto flex-1 bg-gray-50 border-b border-gray-100">
+              <div className="mb-6 bg-white p-4 rounded-xl border border-blue-100 shadow-sm">
+                <h4 className="font-semibold text-gray-800 mb-3 flex items-center">
+                  <Clock className="w-5 h-5 mr-2 text-blue-500" />
+                  Test Configuration
+                </h4>
+                <div className="flex items-center gap-4">
+                  <div className="flex-1">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Time Limit (Minutes)
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      max="300"
+                      value={testDuration}
+                      onChange={(e) => setTestDuration(Number(e.target.value))}
+                      className="w-full sm:max-w-xs px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <h4 className="font-semibold text-gray-800 mb-4 flex items-center">
+                <FileText className="w-5 h-5 mr-2 text-gray-500" />
+                Generated Questions ({testPreviewData?.length || 0})
+              </h4>
+              
+              <div className="space-y-4">
+                {testPreviewData?.map((q, idx) => (
+                  <div key={idx} className="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
+                    <p className="font-medium text-gray-800">
+                      <span className="text-gray-500 mr-2">{idx + 1}.</span>
+                      {q.question || q.q}
+                    </p>
+                    {q.type === 'mcq' && q.options && (
+                      <ul className="mt-3 space-y-1 pl-6">
+                        {q.options.map((opt, oIdx) => (
+                          <li key={oIdx} className={`text-sm ${opt === q.answerKey ? 'font-semibold text-green-700 bg-green-50 px-2 py-1 rounded inline-block' : 'text-gray-600'}`}>
+                            • {opt} {opt === q.answerKey && '✓ (Correct)'}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                    {q.type !== 'mcq' && q.answerKey && (
+                      <div className="mt-3 bg-gray-50 p-2 rounded border border-gray-100 text-sm">
+                        <span className="font-semibold text-gray-700">Expected/Correct Answer:</span> {q.answerKey}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Footer actions */}
+            <div className="px-6 py-4 bg-white rounded-b-2xl flex items-center justify-end space-x-3 shrink-0">
+              <button
+                type="button"
+                onClick={() => setShowTestPreviewModal(false)}
+                className="px-5 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+                disabled={assigningTest}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={confirmAssignTest}
+                disabled={assigningTest || !testDuration || testDuration <= 0}
+                className="px-6 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg font-medium hover:from-indigo-700 hover:to-purple-700 transition-colors flex items-center disabled:opacity-50 shadow-md"
+              >
+                {assigningTest ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                    Assigning...
+                  </>
+                ) : (
+                  'Assign to Candidate'
+                )}
+              </button>
             </div>
           </motion.div>
         </motion.div>
